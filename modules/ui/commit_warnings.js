@@ -5,10 +5,12 @@ import { uiSection } from '../ui/section';
 import { utilEntityOrMemberSelector } from '../util';
 
 export function uiCommitWarnings(context) {
-
     var _issuesBySeverity = {};
 
     function commitWarnings(selection) {
+        // Wrap the selection in a div with the class modal-section
+        selection = selection.append('div').attr('class', 'modal-section');
+
         // Load issues by severity
         _issuesBySeverity = context.validator()
             .getIssuesBySeverity({ what: 'edited', where: 'all', includeDisabledRules: true });
@@ -23,7 +25,7 @@ export function uiCommitWarnings(context) {
             if (!issues.length) continue;
 
             // Create a collapsible section for each severity level
-            var section = uiSection('issues-'+ severity , context)
+            var section = uiSection('issues-' + severity, context)
                 .label(() => {
                     var count = issues.length;
                     return t.append(
@@ -38,7 +40,10 @@ export function uiCommitWarnings(context) {
                     return issues && issues.length;
                 });
 
-            selection.call(section.render);
+            // Add the appropriate class for styling based on severity
+            selection
+                .call(section.render)
+                .classed(severity + '-section', true);
         }
     }
 
@@ -46,9 +51,9 @@ export function uiCommitWarnings(context) {
         selection.selectAll('.issues-list').remove();
         var container = selection
             .append('ul')
-            .attr('class', 'changeset-list issues-list ' + severity + '-list');
+            .attr('class', 'layer-list issues-list ' + severity + 's-list');
 
-            container.exit().remove();
+        container.exit().remove();
 
         var items = container.selectAll('li')
             .data(issues, function(d) { return d.key; });
@@ -57,7 +62,7 @@ export function uiCommitWarnings(context) {
 
         var itemsEnter = items.enter()
             .append('li')
-            .attr('class', severity + '-item');
+            .attr('class', function (d) { return 'issue severity-' + d.severity; });
 
         var buttons = itemsEnter
             .append('button')
@@ -78,11 +83,21 @@ export function uiCommitWarnings(context) {
                 context.validator().focusIssue(d);
             });
 
-        buttons
-            .call(svgIcon('#iD-icon-alert', 'pre-text'));
+            var textEnter = buttons
+            .append('span')
+            .attr('class', 'issue-text');
 
-        buttons
-            .append('strong')
+        textEnter
+            .append('span')
+            .attr('class', 'issue-icon')
+            .each(function(d) {
+                var iconName = '#iD-icon-' + (d.severity === 'warning' ? 'alert' : 'error');
+                d3_select(this)
+                    .call(svgIcon(iconName));
+            });
+
+        textEnter
+            .append('span')
             .attr('class', 'issue-message');
 
         itemsEnter
