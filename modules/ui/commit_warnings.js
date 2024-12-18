@@ -51,7 +51,7 @@ export function uiCommitWarnings(context) {
         selection.selectAll('.issues-list').remove();
         var container = selection
             .append('ul')
-            .attr('class', 'layer-list issues-list ' + severity + 's-list');
+            .attr('class', 'changeset-list');
 
         container.exit().remove();
 
